@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Banking Menu</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+      }
+      .menu-container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #1a73e8;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .menu-button {
+        display: block;
+        width: 200px;
+        padding: 12px;
+        margin: 10px 0;
+        background-color: #1a73e8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-align: center;
+        text-decoration: none;
+      }
+      .menu-button:hover {
+        background-color: #1557b0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="menu-container">
+      <h1>Banking Services</h1>
+      <a
+        th:if="${userRole == 'TELLER'}"
+        href="/account/create"
+        class="menu-button"
+        >Create Account</a
+      >
+      <a href="/transaction/deposit" class="menu-button">Deposit Money</a>
+      <a href="/transaction/transfer" class="menu-button">Transfer Money</a>
+      <a href="/account/info" class="menu-button">Account Information</a>
+      <a href="/account/statement" class="menu-button">Bank Statement</a>
+    </div>
+  </body>
+</html>

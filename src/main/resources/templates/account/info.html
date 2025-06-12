@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Information</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .account-info-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .info-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .info-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+      .info-value {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #212529;
+      }
+      .balance-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #198754;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container">
+      <div class="d-flex justify-content-end mt-3">
+        <button id="logoutBtn" class="btn btn-outline-danger">Logout</button>
+      </div>
+      <div class="account-info-container">
+        <h2 class="text-center mb-4">Account Information</h2>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-card">
+              <div class="info-label">Account Number</div>
+              <div class="info-value" id="accountNumber">Loading...</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card">
+              <div class="info-label">Account Balance</div>
+              <div class="balance-value" id="accountBalance">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-card">
+              <div class="info-label">Thai Name</div>
+              <div class="info-value" id="thaiName">Loading...</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card">
+              <div class="info-label">English Name</div>
+              <div class="info-value" id="englishName">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-4">
+          <a href="/" class="btn btn-primary">Back to Menu</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden input to store account number from model -->
+    <input type="hidden" id="modelAccountNumber" th:value="${accountNumber}" />
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get account number from model
+        const accountNumber =
+          document.getElementById("modelAccountNumber").value
+        if (accountNumber) {
+          fetchAccountInfo(accountNumber)
+        } else {
+          alert("Account Not found, Please contact TELLER to create account")
+          window.location.href = "/"
+        }
+      })
+
+      function fetchAccountInfo(accountNumber) {
+        const jwt = localStorage.getItem("jwt")
+        fetch(`/api/transaction/account/${accountNumber}`, {
+          headers: {
+            Authorization: "Bearer " + jwt,
+          },
+        })
+          .then((response) => {
+            if (response.status === 401) {
+              localStorage.removeItem("jwt")
+              window.location.href = "/login"
+              return
+            }
+            return response.json()
+          })
+          .then((data) => {
+            if (!data) return
+            document.getElementById("accountNumber").textContent =
+              data.accountNumber
+            document.getElementById("accountBalance").textContent =
+              data.balance.toFixed(2) + " THB"
+            document.getElementById("thaiName").textContent = data.thaiName
+            document.getElementById("englishName").textContent =
+              data.englishName
+          })
+          .catch((error) => {
+            console.error("Error fetching account info:", error)
+            alert("Error loading account information")
+          })
+      }
+
+      document.getElementById("logoutBtn").onclick = function () {
+        localStorage.removeItem("jwt")
+        localStorage.removeItem("accountNumber")
+        window.location.href = "/login"
+      }
+    </script>
+  </body>
+</html>

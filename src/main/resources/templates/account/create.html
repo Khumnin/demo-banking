@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Create Account</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+      }
+      .form-container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 400px;
+      }
+      h1 {
+        color: #1a73e8;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-weight: 500;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+      }
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+      }
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .btn-primary {
+        background-color: #1a73e8;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #1557b0;
+      }
+      .btn-secondary {
+        background-color: #f1f3f4;
+        color: #333;
+      }
+      .btn-secondary:hover {
+        background-color: #e8eaed;
+      }
+      .error-message {
+        color: #d93025;
+        margin-top: 1rem;
+        text-align: center;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h1>Create New Account</h1>
+      <form id="createAccountForm">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="text" id="id" name="id" required />
+        </div>
+        <div class="form-group">
+          <label for="thaiName">Thai Name:</label>
+          <input type="text" id="thaiName" name="thaiName" required />
+        </div>
+        <div class="form-group">
+          <label for="englishName">English Name:</label>
+          <input type="text" id="englishName" name="englishName" required />
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="button-group">
+          <a href="/" class="btn btn-secondary">Back</a>
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      document
+        .getElementById("createAccountForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault()
+
+          const token = localStorage.getItem("jwt")
+          if (!token) {
+            showError("Authentication required. Please login again.")
+            return
+          }
+
+          const formData = {
+            id: document.getElementById("id").value,
+            thaiName: document.getElementById("thaiName").value,
+            englishName: document.getElementById("englishName").value,
+          }
+
+          try {
+            const response = await fetch("/api/account/create", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(formData),
+            })
+
+            if (response.ok) {
+              window.location.href = "/"
+            } else {
+              const error = await response.text()
+              showError(error || "Failed to create account")
+            }
+          } catch (error) {
+            showError("An error occurred while creating the account")
+          }
+        })
+
+      function showError(message) {
+        const errorElement = document.getElementById("errorMessage")
+        errorElement.textContent = message
+        errorElement.style.display = "block"
+      }
+    </script>
+  </body>
+</html>

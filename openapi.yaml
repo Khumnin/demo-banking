@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: Banking Application API
+  description: API documentation for the Banking Application
+  version: 1.0.0
+  contact:
+    name: Banking Team
+    email: support@banking.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    User:
+      type: object
+      required:
+        ["email", "password", "id", "thaiName", "englishName", "pin", "role"]
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        password:
+          type: string
+          format: password
+          description: User's password
+        id:
+          type: string
+          description: User's ID
+        thaiName:
+          type: string
+          description: User's name in Thai
+        englishName:
+          type: string
+          description: User's name in English
+        pin:
+          type: string
+          format: password
+          description: User's PIN for transactions
+        role:
+          type: string
+          enum: [CUSTOMER, TELLER]
+          description: User's role in the system
+
+    Account:
+      type: object
+      required: ["accountNumber", "id", "thaiName", "englishName", "balance"]
+      properties:
+        accountNumber:
+          type: string
+          description: Unique account number
+        id:
+          type: string
+          description: User ID associated with the account
+        thaiName:
+          type: string
+          description: Account holder's name in Thai
+        englishName:
+          type: string
+          description: Account holder's name in English
+        balance:
+          type: number
+          format: double
+          description: Current account balance
+
+    Transaction:
+      type: object
+      required: ["id", "accountNumber", "amount", "type", "timestamp", "status"]
+      properties:
+        id:
+          type: string
+          description: Transaction ID
+        accountNumber:
+          type: string
+          description: Account number involved in transaction
+        amount:
+          type: number
+          format: double
+          description: Transaction amount
+        type:
+          type: string
+          enum: [DEPOSIT, TRANSFER]
+          description: Type of transaction
+        timestamp:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+        status:
+          type: string
+          enum: [COMPLETED, FAILED]
+          description: Transaction status
+
+    LoginRequest:
+      type: object
+      required: ["email", "password"]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required: ["token", "role"]
+      properties:
+        token:
+          type: string
+          description: JWT token for authentication
+        role:
+          type: string
+          enum: [CUSTOMER, TELLER]
+          description: User's role
+
+    Error:
+      type: object
+      required: ["message", "timestamp"]
+      properties:
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user and get JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/account/create:
+    post:
+      summary: Create a new bank account
+      tags:
+        - Account Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["id", "thaiName", "englishName"]
+              properties:
+                id:
+                  type: string
+                thaiName:
+                  type: string
+                englishName:
+                  type: string
+      responses:
+        "201":
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden - Requires TELLER role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/account/{accountNumber}:
+    get:
+      summary: Get account details
+      tags:
+        - Account Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Account details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/transactions/deposit:
+    post:
+      summary: Deposit funds into an account
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["accountNumber", "amount"]
+              properties:
+                accountNumber:
+                  type: string
+                amount:
+                  type: number
+                  format: double
+      responses:
+        "200":
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "400":
+          description: Invalid amount
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/transactions/transfer:
+    post:
+      summary: Transfer funds between accounts
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                [
+                  "sourceAccountNumber",
+                  "destinationAccountNumber",
+                  "amount",
+                  "pin",
+                ]
+              properties:
+                sourceAccountNumber:
+                  type: string
+                destinationAccountNumber:
+                  type: string
+                amount:
+                  type: number
+                  format: double
+                pin:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Transfer successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "400":
+          description: Invalid transfer request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Invalid PIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/transactions/{accountNumber}:
+    get:
+      summary: Get transaction history for an account
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/users/{email}:
+    get:
+      summary: Get user details
+      tags:
+        - User Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: User details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
