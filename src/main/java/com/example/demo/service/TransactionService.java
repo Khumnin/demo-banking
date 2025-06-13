@@ -52,7 +52,7 @@ public class TransactionService {
             accountRepository.save(account);
 
             // Create and save transaction record
-            Transaction transaction = new Transaction(account, amount, account.getBalance(), channel,
+            Transaction transaction = new Transaction(accountNumber, amount, account.getBalance(), channel,
                     description);
             return transactionRepository.save(transaction);
         } catch (OptimisticLockingFailureException e) {
@@ -86,10 +86,9 @@ public class TransactionService {
             }
 
             // Validate PIN
-            User user = sourceAccount.getUser();
-            if (user == null) {
-                throw new EntityNotFoundException("User not found for account: " + sourceAccountNumber);
-            }
+            User user = userRepository.findByid(sourceAccount.getId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("User not found for account: " + sourceAccountNumber));
 
             if (!encoder.matches(pin, user.getPin())) {
                 throw new IllegalArgumentException("Invalid PIN");
@@ -104,12 +103,12 @@ public class TransactionService {
 
             // Create and save transaction records
             // Source account transaction
-            Transaction transaction = new Transaction(sourceAccount, destinationAccountNumber, amount * -1,
+            Transaction transaction = new Transaction(sourceAccountNumber, destinationAccountNumber, amount * -1,
                     sourceAccount.getBalance(), TransactionChannel.OTC, "Transfer via OTC");
             transactionRepository.save(transaction);
 
             // Destination account transaction
-            transaction = new Transaction(destinationAccount, sourceAccountNumber, amount,
+            transaction = new Transaction(destinationAccountNumber, sourceAccountNumber, amount,
                     destinationAccount.getBalance(), TransactionChannel.ATS, "Transfer via ATS");
             transaction.setDescription(String.format("Transfer from %s: %s", sourceAccountNumber, "Transfer via ATS"));
             return transactionRepository.save(transaction);
