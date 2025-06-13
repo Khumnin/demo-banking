@@ -258,6 +258,47 @@ The application uses a multi-stage Docker build process:
    - **app**: Spring Boot application
    - **db**: PostgreSQL database
 
+## Health Check
+
+The application provides a comprehensive health check endpoint using Spring Boot Actuator:
+
+- **Endpoint:** `http://localhost:8080/actuator/health`
+- **Checks:**
+  - Application liveness and readiness
+  - Database connectivity (PostgreSQL)
+  - Disk space
+  - Other system health indicators
+- **Details:**
+  - The endpoint returns detailed health information in JSON format.
+  - Example response:
+    ```json
+    {
+      "status": "UP",
+      "components": {
+        "db": { "status": "UP", "details": { "database": "PostgreSQL", ... } },
+        "diskSpace": { "status": "UP", ... },
+        "livenessState": { "status": "UP" },
+        "readinessState": { "status": "UP" }
+      }
+    }
+    ```
+- **Docker Integration:**
+  - The Docker Compose file includes a healthcheck for the app service that pings this endpoint to ensure the application is running and healthy.
+  - Example:
+    ```yaml
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    ```
+
+You can also access the health check endpoint directly in your browser or with curl:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
 ### Running Tests
 
 ```bash
@@ -412,5 +453,7 @@ For complete API documentation including request/response schemas, error codes, 
 - Password: password
 - PIN: 5678
 - Role: CUSTOMER
+
+```
 
 ```
