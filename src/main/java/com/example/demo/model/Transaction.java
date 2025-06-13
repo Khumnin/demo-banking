@@ -10,6 +10,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name = "transactions")
@@ -20,6 +23,9 @@ public class Transaction {
 
     @Column(nullable = false, name = "account_number")
     private String accountNumber;
+
+    @Column(nullable = false, unique = true, name = "reference_number")
+    private String referenceNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "code")
@@ -52,6 +58,7 @@ public class Transaction {
     public Transaction(String accountNumber, double amount, double balance, TransactionChannel channel,
             String description) {
         this.accountNumber = accountNumber;
+        this.referenceNumber = generateReferenceNumber();
         this.type = TransactionType.DEPOSIT;
         this.channel = channel;
         this.amount = amount;
@@ -66,6 +73,7 @@ public class Transaction {
             TransactionChannel channel,
             String description) {
         this.accountNumber = accountNumber;
+        this.referenceNumber = generateReferenceNumber();
         this.type = TransactionType.TRANSFER;
         this.channel = channel;
         this.amount = amount;
@@ -73,6 +81,10 @@ public class Transaction {
         this.date = LocalDate.now();
         this.time = LocalTime.now();
         this.description = String.format("Transfer to %s: %s", destinationAccount, description);
+    }
+
+    private String generateReferenceNumber() {
+        return UUID.randomUUID().toString();
     }
 
     // Getters and Setters
@@ -146,5 +158,13 @@ public class Transaction {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 }

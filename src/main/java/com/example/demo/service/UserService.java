@@ -16,7 +16,7 @@ public class UserService {
     }
 
     public String getUserIdByEmail(String email) {
-        User user = userRepository.findById(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         return user.getId();
     }

@@ -23,11 +23,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/api/account")
 public class AccountController {
-
+    private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
     private final AccountService accountService;
     private final TransactionService transactionService;
     private final UserRepository userRepository;
@@ -44,9 +49,12 @@ public class AccountController {
 
     @PreAuthorize("hasRole('TELLER')")
     @PostMapping("/create")
-    public String createAccount(@RequestParam String id,
-            @RequestParam String thaiName,
-            @RequestParam String englishName) {
+    public String createAccount(@RequestBody Account account) {
+        String id = account.getId();
+        String thaiName = account.getThaiName();
+        String englishName = account.getEnglishName();
+        System.out.println(
+                "Creating account with id: " + id + ", thaiName: " + thaiName + ", englishName: " + englishName);
         accountService.createAccount(id, thaiName, englishName);
         return "redirect:/";
     }
@@ -60,8 +68,29 @@ public class AccountController {
         if (pin == null || pin.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        // Validate PIN
+
+        // Get the authenticated user's information
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String authenticatedUserId = authentication.getName();
+
+        // Get the requested account
         Account account = accountService.getAccountByNumber(accountNumber);
+        if (account == null) {
+            logger.warn("Account not found: {}", accountNumber);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Get user information for the account
+        User accountUser = userRepository.findByid(account.getId())
+                .orElseThrow(() -> new RuntimeException("User not found for account"));
+
+        // Access control check
+        if (!accountUser.getEmail().equals(authenticatedUserId)) {
+            logger.warn("Unauthorized access attempt to account {} by user {}", accountNumber, authenticatedUserId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // Validate PIN
         User user = userRepository.findByid(account.getId()).orElse(null);
         if (user == null || !passwordEncoder.matches(pin, user.getPin())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -79,5 +108,50 @@ public class AccountController {
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(statement);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/info/{accountNumber}")
+    public ResponseEntity<?> getAccountInfo(@PathVariable String accountNumber) {
+        try {
+            // Get the authenticated user's information
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String authenticatedUserId = authentication.getName();
+
+            // Get the requested account
+            Account account = accountService.getAccountByNumber(accountNumber);
+            if (account == null) {
+                logger.warn("Account not found: {}", accountNumber);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found");
+            }
+
+            // Get user information for the account
+            User accountUser = userRepository.findByid(account.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found for account"));
+
+            // Access control check
+            if (!accountUser.getEmail().equals(authenticatedUserId)) {
+                logger.warn("Unauthorized access attempt to account {} by user {}", accountNumber, authenticatedUserId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+            }
+
+            // Create a response object with only necessary information
+            Map<String, Object> accountInfo = Map.of(
+                    "accountNumber", account.getAccountNumber(),
+                    "thaiName", account.getThaiName(),
+                    "englishName", account.getEnglishName(),
+                    "balance", account.getBalance(),
+                    "id", account.getId(),
+                    "email", accountUser.getEmail());
+
+            logger.info("Account info retrieved successfully for account: {} by user: {}",
+                    accountNumber, authenticatedUserId);
+            return ResponseEntity.ok(accountInfo);
+        } catch (Exception e) {
+            logger.error("Error retrieving account info for account: {} - Error: {}",
+                    accountNumber, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving account information");
+        }
     }
 }

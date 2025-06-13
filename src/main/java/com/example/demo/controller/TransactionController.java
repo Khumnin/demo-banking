@@ -45,18 +45,6 @@ public class TransactionController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/account/{accountNumber}")
-    public ResponseEntity<?> getAccountInfo(@PathVariable String accountNumber) {
-        try {
-            Account account = accountService.getAccountByNumber(accountNumber);
-            return ResponseEntity.ok(account);
-        } catch (Exception e) {
-            logger.error("Error getting account info: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/verify-transfer")
     public ResponseEntity<?> verifyTransfer(@RequestBody TransferVerifyRequest request) {
         try {

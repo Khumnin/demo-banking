@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "accounts")
@@ -11,12 +12,16 @@ public class Account {
     @Id
     @Column(name = "account_number", unique = true, length = 7)
     private String accountNumber;
+    @Column(name = "id")
     private String id;
     @Column(name = "thai_name")
     private String thaiName;
     @Column(name = "english_name")
     private String englishName;
+    @Column(name = "balance")
     private double balance;
+    @Version
+    private Long version;
 
     // Default constructor required by JPA
     public Account() {

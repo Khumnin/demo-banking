@@ -101,7 +101,7 @@
 
       function fetchAccountInfo(accountNumber) {
         const jwt = localStorage.getItem("jwt")
-        fetch(`/api/transaction/account/${accountNumber}`, {
+        fetch(`/api/account/info/${accountNumber}`, {
           headers: {
             Authorization: "Bearer " + jwt,
           },

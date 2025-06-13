@@ -85,6 +85,44 @@ graph TD
     WS --> JWT
 ```
 
+## Database Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USER {
+        string id PK
+        string email
+        string password
+        string thaiName
+        string englishName
+        string pin
+        string role
+    }
+    ACCOUNT {
+        string accountNumber PK
+        string id FK
+        string thaiName
+        string englishName
+        double balance
+        long version
+    }
+    TRANSACTION {
+        long id PK
+        string accountNumber FK
+        string referenceNumber
+        string type
+        string channel
+        double amount
+        double balance
+        date date
+        time time
+        string description
+    }
+
+    USER ||--o{ ACCOUNT : "has"
+    ACCOUNT ||--o{ TRANSACTION : "has"
+```
+
 ## Component Descriptions
 
 ### Frontend Components
@@ -249,6 +287,18 @@ docker-compose build
 - CSRF protection
 - Secure password storage
 - Role-based access control
+
+## Duplicate Avoidance Mechanisms
+
+The application implements several mechanisms to prevent duplicate records and operations:
+
+- **Database Constraints**: Unique constraints are enforced at the database level (e.g., unique account numbers, unique user emails, unique transaction reference numbers) to prevent duplicate entries.
+- **Transaction Isolation**: Critical operations such as account creation and transaction processing use SERIALIZABLE isolation to avoid race conditions and ensure data consistency.
+- **Application-Level Checks**: Before creating new accounts or processing transactions, the application checks for existing records to avoid duplicates.
+- **Idempotency**: Transaction reference numbers are generated using UUIDs to ensure each transaction is unique and can be safely retried without duplication.
+- **Optimistic Locking**: The Account entity uses a version field to prevent concurrent updates from causing duplicate or inconsistent data.
+
+These mechanisms work together to ensure data integrity and prevent duplicate accounts, users, or transactions in the system.
 
 ## API Documentation
 

@@ -9,10 +9,12 @@ import jakarta.persistence.Column;
 @Table(name = "users")
 public class User {
     @Id
-    private String email;
-    private String password;
-
     private String id;
+
+    @Column(unique = true)
+    private String email;
+
+    private String password;
 
     @Column(name = "thai_name")
     private String thaiName;
@@ -28,11 +30,11 @@ public class User {
     }
 
     // Constructor with fields
-    public User(String email, String password, String id, String thaiName, String englishName, String pin,
+    public User(String id, String email, String password, String thaiName, String englishName, String pin,
             String role) {
+        this.id = id;
         this.email = email;
         this.password = password;
-        this.id = id;
         this.thaiName = thaiName;
         this.englishName = englishName;
         this.pin = pin;

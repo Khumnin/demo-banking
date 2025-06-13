@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, String> {
     // Spring Data JPA will automatically implement basic CRUD operations
     Optional<User> findByid(String id);
+
+    Optional<User> findByEmail(String email);
 }
