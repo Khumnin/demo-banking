@@ -35,7 +35,7 @@ class CustomUserDetailsServiceTest {
         user.setEmail(email);
         user.setPassword(password);
         user.setRole(role);
-        when(userRepository.findById(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -46,17 +46,17 @@ class CustomUserDetailsServiceTest {
         assertEquals(password, userDetails.getPassword());
         assertTrue(userDetails.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_" + role)));
-        verify(userRepository).findById(email);
+        verify(userRepository).findByEmail(email);
     }
 
     @Test
     void loadUserByUsername_WhenUserDoesNotExist_ThrowsException() {
         // Arrange
         String email = "nonexistent@example.com";
-        when(userRepository.findById(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(email));
-        verify(userRepository).findById(email);
+        verify(userRepository).findByEmail(email);
     }
 }

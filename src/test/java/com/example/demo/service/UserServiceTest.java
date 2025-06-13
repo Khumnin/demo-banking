@@ -32,24 +32,24 @@ class UserServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setId(expectedId);
-        when(userRepository.findById(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         // Act
         String actualId = userService.getUserIdByEmail(email);
 
         // Assert
         assertEquals(expectedId, actualId);
-        verify(userRepository).findById(email);
+        verify(userRepository).findByEmail(email);
     }
 
     @Test
     void getUserIdByEmail_WhenUserDoesNotExist_ThrowsException() {
         // Arrange
         String email = "nonexistent@example.com";
-        when(userRepository.findById(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> userService.getUserIdByEmail(email));
-        verify(userRepository).findById(email);
+        verify(userRepository).findByEmail(email);
     }
 }
